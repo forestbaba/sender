@@ -22,6 +22,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -29,6 +30,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
@@ -46,6 +48,7 @@ public class UserServiceImpl implements UserService {
     JwtTokenUtil jwtTokenUtil;
 
     private Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+    Map<String, Object> response = new HashMap<>();
 
     @Override
     public User createUser(SignupRequest user) throws UserAlreadyExistException, InvalidRequestBodyException {
@@ -98,9 +101,25 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<?> login(LoginRequest loginRequest) {
+    public ResponseEntity<?> login(LoginRequest loginRequest) throws InvalidRequestBodyException {
+        boolean check1 = userRepository.existsByEmail(loginRequest.getEmail());
+        boolean check2 = userRepository.existsByPhone(loginRequest.getPhone());
+
+        if(check1){
+          User user =  userRepository.findUserByEmail(loginRequest.getEmail());
+          if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
+              throw new InvalidRequestBodyException("Invalid credentials, try again later");
+          }
+        }else if(check2){
+          User user =  userRepository.findUserByPhone(loginRequest.getPhone());
+          if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
+              throw new InvalidRequestBodyException("Invalid credentials, try again later");
+          }
+        }
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtTokenUtil.generateJwtToken(authentication);
@@ -118,9 +137,25 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<?> updatePassword(UpdatePasswordRequest updatePasswordRequest) {
+    public ResponseEntity<?> updatePassword(UpdatePasswordRequest updatePasswordRequest) throws InvalidRequestBodyException {
 
-        return null;
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
+
+        User user = userRepository.findUserById(userDetails.getId());
+        System.out.println("The old password: "+updatePasswordRequest.getOldPassword());
+        if(passwordEncoder.matches( updatePasswordRequest.getOldPassword(), user.getPassword())){
+            String newPassword = passwordEncoder.encode(updatePasswordRequest.getNewPassword());
+            user.setPassword(newPassword);
+            userRepository.save(user);
+            response.put("error", true);
+            response.put("message", "Password updated Successfully");
+            response.put("user",user);
+
+            return  ResponseEntity.ok(response);
+        }else {
+            throw new InvalidRequestBodyException("oldPassword do not match");
+        }
     }
 
     @Override
@@ -165,7 +200,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<?> setPassword(Map<String, Object> forgotPasswordRequest) throws InvalidRequestBodyException {
-        Map<String, Object> response = new HashMap<>();
         int code =0;
         String newPassword = passwordEncoder.encode(forgotPasswordRequest.get("newPassword").toString());
 

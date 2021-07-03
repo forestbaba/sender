@@ -14,9 +14,9 @@ import java.util.Map;
 public interface UserService {
     User createUser(SignupRequest user1) throws UserAlreadyExistException, InvalidRequestBodyException;
 
-    ResponseEntity<?> login(LoginRequest loginRequest);
+    ResponseEntity<?> login(LoginRequest loginRequest) throws InvalidRequestBodyException;
 
-    ResponseEntity<?> updatePassword(UpdatePasswordRequest updatePasswordRequest);
+    ResponseEntity<?> updatePassword(UpdatePasswordRequest updatePasswordRequest) throws InvalidRequestBodyException;
 
     ResponseEntity<?> forgotPassword(ForgotPasswordRequest forgotPasswordRequest) throws InvalidRequestBodyException;
 

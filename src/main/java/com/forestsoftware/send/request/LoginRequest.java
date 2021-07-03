@@ -5,6 +5,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Getter
 public class LoginRequest {
     private String email;
     private String password;
@@ -19,5 +20,8 @@ public class LoginRequest {
     }
     public String getPassword(){
         return password;
+    }
+    public String getPhone(){
+        return phone;
     }
 }

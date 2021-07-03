@@ -22,7 +22,7 @@ import java.util.Map;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/v1/users/auth")
 public class UserAuthController {
 
 
@@ -53,7 +53,7 @@ public class UserAuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) throws InvalidRequestBodyException {
        return userService.login(loginRequest);
     }
 

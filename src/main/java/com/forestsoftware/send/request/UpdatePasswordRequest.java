@@ -1,15 +1,23 @@
 package com.forestsoftware.send.request;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class UpdatePasswordRequest {
+    @NotBlank
+    @NotNull(message = "Old password is required")
     private String oldPassword;
+
+    @NotBlank
+    @NotNull(message = "New password is required")
     private String newPassword;
 
+    public String getOldPassword() {
+        return oldPassword;
+    }
+
+    public String getNewPassword() {
+        return newPassword;
+    }
 }
